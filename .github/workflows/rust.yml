@@ -46,45 +46,38 @@ jobs:
           - runner: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             artifact_name: n3n-mgmt-api-rs-x86_64-unknown-linux-gnu
-            asset_name: n3n-mgmt-api-rs-x86_64-unknown-linux-gnu
             
           # Linux ARM64
           - runner: ubuntu-latest
             target: aarch64-unknown-linux-gnu
             artifact_name: n3n-mgmt-api-rs-aarch64-unknown-linux-gnu
-            asset_name: n3n-mgmt-api-rs-aarch64-unknown-linux-gnu
             
           # Linux RISC-V64
           - runner: ubuntu-latest
             target: riscv64gc-unknown-linux-gnu
             artifact_name: n3n-mgmt-api-rs-riscv64gc-unknown-linux-gnu
-            asset_name: n3n-mgmt-api-rs-riscv64gc-unknown-linux-gnu
             
 
             
           # Windows AMD64
           - runner: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact_name: n3n-mgmt-api-rs-x86_64-pc-windows-msvc
-            asset_name: n3n-mgmt-api-rs-x86_64-pc-windows-msvc.exe
+            artifact_name: n3n-mgmt-api-rs-x86_64-pc-windows-msvc.exe
             
           # Windows ARM64
           - runner: windows-latest
             target: aarch64-pc-windows-msvc
-            artifact_name: n3n-mgmt-api-rs-aarch64-pc-windows-msvc
-            asset_name: n3n-mgmt-api-rs-aarch64-pc-windows-msvc.exe
+            artifact_name: n3n-mgmt-api-rs-aarch64-pc-windows-msvc.exe
             
           # macOS AMD64
           - runner: macos-latest
             target: x86_64-apple-darwin
             artifact_name: n3n-mgmt-api-rs-x86_64-apple-darwin
-            asset_name: n3n-mgmt-api-rs-x86_64-apple-darwin
             
           # macOS ARM64
           - runner: macos-latest
             target: aarch64-apple-darwin
             artifact_name: n3n-mgmt-api-rs-aarch64-apple-darwin
-            asset_name: n3n-mgmt-api-rs-aarch64-apple-darwin
 
     steps:
     - uses: actions/checkout@v6
@@ -116,7 +109,7 @@ jobs:
         echo "Cross-compilation tools for ARM64 already available"
         
     - name: Cache cargo registry
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.cargo/registry
