@@ -40,11 +40,9 @@ impl N3nClient {
         let client = if using_unix_socket {
             #[cfg(unix)]
             {
-                use hyper_unix_connector::UnixConnector;
                 let socket_path = api_endpoint.trim_start_matches("unix://");
-                let connector = UnixConnector::new();
                 Client::builder()
-                    .connector(connector)
+                    .unix_socket(socket_path)
                     .build()?
             }
             #[cfg(not(unix))]
