@@ -127,19 +127,19 @@ jobs:
     - name: Rename binary (Linux)
       if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
       run: |
-        mv target/${{ matrix.target }}/release/n3n-mgmt-api-rs ./n3n-mgmt-api-rs
+        mv target/${{ matrix.target }}/release/n3n-mgmt-api-rs ./${{ matrix.artifact_name }}
       shell: bash
       
     - name: Rename binary (Windows)
       if: runner.os == 'Windows'
       run: |
-        Move-Item -Path "target\\${{ matrix.target }}\\release\\n3n-mgmt-api-rs.exe" -Destination "n3n-mgmt-api-rs.exe"
+        Move-Item -Path "target\\${{ matrix.target }}\\release\\n3n-mgmt-api-rs.exe" -Destination "${{ matrix.artifact_name }}"
       shell: pwsh
       
     - name: Rename binary (macOS)
       if: runner.os == 'macOS'
       run: |
-        mv target/${{ matrix.target }}/release/n3n-mgmt-api-rs ./n3n-mgmt-api-rs
+        mv target/${{ matrix.target }}/release/n3n-mgmt-api-rs ./${{ matrix.artifact_name }}
       shell: bash
       
     - name: Upload artifacts
@@ -147,7 +147,7 @@ jobs:
       with:
         name: ${{ matrix.artifact_name }}
         path: |
-          n3n-mgmt-api-rs*
+          ${{ matrix.artifact_name }}
 
   release:
     needs: build-and-release
