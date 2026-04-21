@@ -1,0 +1,181 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the release (e.g., v1.0.0)'
+        required: true
+        type: string
+      title:
+        description: 'Release title'
+        required: true
+        type: string
+      body:
+        description: 'Release description'
+        required: false
+        type: string
+      draft:
+        description: 'Create as draft?'
+        required: false
+        type: boolean
+        default: false
+      prerelease:
+        description: 'Is this a pre-release?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-release:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          # Linux AMD64
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: n3n-mgmt-api-rs-x86_64-unknown-linux-gnu
+            asset_name: n3n-mgmt-api-rs-x86_64-unknown-linux-gnu
+            
+          # Linux ARM64
+          - runner: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            artifact_name: n3n-mgmt-api-rs-aarch64-unknown-linux-gnu
+            asset_name: n3n-mgmt-api-rs-aarch64-unknown-linux-gnu
+            
+          # Linux RISC-V64
+          - runner: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            artifact_name: n3n-mgmt-api-rs-riscv64gc-unknown-linux-gnu
+            asset_name: n3n-mgmt-api-rs-riscv64gc-unknown-linux-gnu
+            
+
+            
+          # Windows AMD64
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: n3n-mgmt-api-rs-x86_64-pc-windows-msvc
+            asset_name: n3n-mgmt-api-rs-x86_64-pc-windows-msvc.exe
+            
+          # Windows ARM64
+          - runner: windows-latest
+            target: aarch64-pc-windows-msvc
+            artifact_name: n3n-mgmt-api-rs-aarch64-pc-windows-msvc
+            asset_name: n3n-mgmt-api-rs-aarch64-pc-windows-msvc.exe
+            
+          # macOS AMD64
+          - runner: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: n3n-mgmt-api-rs-x86_64-apple-darwin
+            asset_name: n3n-mgmt-api-rs-x86_64-apple-darwin
+            
+          # macOS ARM64
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: n3n-mgmt-api-rs-aarch64-apple-darwin
+            asset_name: n3n-mgmt-api-rs-aarch64-apple-darwin
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+        
+    - name: Install cross-compilation tools (Ubuntu)
+      if: runner.os == 'Linux' && matrix.target != 'x86_64-unknown-linux-gnu' && !contains(matrix.target, 'loongarch64')
+      run: |
+        sudo apt update
+        case "${{ matrix.target }}" in
+          aarch64-unknown-linux-gnu)
+            sudo apt install -y gcc-aarch64-linux-gnu
+            echo "CC_aarch64_unknown_linux_gnu=gcc-aarch64-linux-gnu" >> $GITHUB_ENV
+            ;;
+          riscv64gc-unknown-linux-gnu)
+            sudo apt install -y gcc-riscv64-linux-gnu
+            echo "CC_riscv64gc_unknown_linux_gnu=gcc-riscv64-linux-gnu" >> $GITHUB_ENV
+            ;;
+        esac
+        
+    - name: Install cross-compilation tools (macOS)
+      if: runner.os == 'macOS' && matrix.target == 'aarch64-apple-darwin'
+      run: |
+        # Xcode normally already includes ARM64 support
+        echo "Cross-compilation tools for ARM64 already available"
+        
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-${{ matrix.target }}
+        
+    - name: Install cross
+      if: contains(matrix.target, 'unknown-linux') || contains(matrix.target, 'apple')
+      run: cargo install cross
+      
+    - name: Build release with cross
+      if: contains(matrix.target, 'unknown-linux') || contains(matrix.target, 'apple')
+      run: cross build --target ${{ matrix.target }} --release
+      
+    - name: Build release with cargo (Windows)
+      if: contains(matrix.target, 'windows')
+      run: cargo build --target ${{ matrix.target }} --release
+      
+    - name: Rename binary (Linux)
+      if: runner.os == 'Linux' && !contains(matrix.target, 'windows')
+      run: |
+        mv target/${{ matrix.target }}/release/n3n-mgmt-api-rs ./n3n-mgmt-api-rs
+      shell: bash
+      
+    - name: Rename binary (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        Move-Item -Path "target\\${{ matrix.target }}\\release\\n3n-mgmt-api-rs.exe" -Destination "n3n-mgmt-api-rs.exe"
+      shell: pwsh
+      
+    - name: Rename binary (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        mv target/${{ matrix.target }}/release/n3n-mgmt-api-rs ./n3n-mgmt-api-rs
+      shell: bash
+      
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact_name }}
+        path: |
+          n3n-mgmt-api-rs*
+
+  release:
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: ./releases
+        
+    - name: Display structure of downloaded files
+      run: ls -R
+      working-directory: ./releases
+      
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ inputs.tag }}
+        name: ${{ inputs.title }}
+        body: ${{ inputs.body }}
+        draft: ${{ inputs.draft }}
+        prerelease: ${{ inputs.prerelease }}
+        files: |
+          ./releases/**/n3n-mgmt-api-rs*
