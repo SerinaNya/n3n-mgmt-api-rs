@@ -33,7 +33,7 @@ pub struct N3nClient {
 
 impl N3nClient {
     /// 创建新的 N3N 客户端
-    pub fn new(api_endpoint: &str) -> Result<Self, std::io::Error> {
+    pub fn new(api_endpoint: &str) -> Result<Self, reqwest::Error> {
         let using_unix_socket = api_endpoint.starts_with("unix://");
         let using_http = api_endpoint.starts_with("http://") || api_endpoint.starts_with("https://");
         

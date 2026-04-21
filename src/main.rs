@@ -176,7 +176,7 @@ async fn serve_static(req: HttpRequest) -> Result<actix_files::NamedFile> {
 }
 
 /// 初始化协议客户端
-fn init_protocol(api_endpoint: &str) -> Result<ProtocolType, std::io::Error> {
+fn init_protocol(api_endpoint: &str) -> Result<ProtocolType, Box<dyn std::error::Error>> {
     if api_endpoint.starts_with("unix://")
         || api_endpoint.starts_with("http://")
         || api_endpoint.starts_with("https://")
@@ -223,7 +223,7 @@ fn init_protocol(api_endpoint: &str) -> Result<ProtocolType, std::io::Error> {
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 解析命令行参数
     let args = Args::parse();
 
