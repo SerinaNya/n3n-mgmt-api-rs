@@ -15,10 +15,19 @@ use n3n_protocol::N3nClient;
 
 /// 命令行参数
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about,  long_about = None)]
 struct Args {
-    #[arg(long)]
-    api_endpoint: Option<String>,
+    #[arg(
+        long,
+        default_value = "unix:///run/n3n/edge/mgmt",
+        help = "
+        n3n / n2nManagementAPI endpoint URL
+
+        - For n3n: `unix:///run/n3n/edge/mgmt` or `http://127.0.0.1:{management_port}`
+        - For n2n: `udp://127.0.0.1:5644`
+       "
+    )]
+    api_endpoint: String,
 
     #[arg(long, default_value = "0.0.0.0")]
     host: String,
@@ -222,9 +231,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     // 配置 API 端点
-    let api_endpoint = args
-        .api_endpoint
-        .unwrap_or("unix:///run/n3n/edge/mgmt".to_string());
+    let api_endpoint = args.api_endpoint;
 
     // 初始化协议客户端
     let protocol = init_protocol(&api_endpoint)?;

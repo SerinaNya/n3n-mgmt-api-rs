@@ -2,6 +2,11 @@
 name = "n3n-mgmt-api-rs"
 version = "0.1.0"
 edition = "2021"
+description = "n3n / n2n Management API Server"
+license = "MIT"
+authors = ["SerinaNya <34389622+SerinaNya@users.noreply.github.com>"]
+repository = "https://github.com/SerinaNya/n3n-mgmt-api-rs"
+
 
 [dependencies]
 actix-files = "0.6.10"
